@@ -1,0 +1,46 @@
+services:
+  pubsub-emulator:
+    container_name: pubsub-emulator
+    build:
+      context: ./pubsub
+      dockerfile: Dockerfile
+    restart: always
+    platform: linux/amd64
+    environment:
+      - PUBSUB_PROJECT_ID=my-project
+      - PUBSUB_TOPIC_ID=my-topic
+      - PUBSUB_SUBSCRIPTION_ID=my-subscription
+      - PUBSUB_EMULATOR_HOST=0.0.0.0:8085
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    volumes:
+      - ./pubsub:/code
+    command: 
+      ./pubsub/entrypoint.sh
+    ports:
+      - 8085:8085
+  publisher:
+    container_name: publisher
+    build:
+      context: ./publisher
+      dockerfile: Dockerfile
+    environment:
+      - PUBSUB_EMULATOR_HOST=pubsub-emulator:8085
+      - PUBSUB_PROJECT_ID=my-project
+      - PUBSUB_TOPIC_ID=my-topic
+      - FLASK_APP=publisher.py
+      - FLASK_ENV=development
+    command: sleep infinity
+    ports:
+      - 8080:8080
+  subscriber:
+    container_name: subscriber
+    build:
+      context: ./subscriber
+      dockerfile: Dockerfile
+    environment:
+      - PUBSUB_EMULATOR_HOST=pubsub-emulator:8085
+      - PUBSUB_PROJECT_ID=my-project
+      - PUBSUB_SUBSCRIPTION_ID=my-subscription
+    working_dir: /app
+    command: sleep infinity

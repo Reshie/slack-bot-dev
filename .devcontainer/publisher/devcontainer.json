@@ -1,0 +1,20 @@
+{
+    "name": "Publisher",
+    "dockerComposeFile": "../../docker-compose.yml",
+    "service": "publisher",
+    "workspaceFolder": "/app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+              "ms-python.python",
+              "ms-python.vscode-pylance"
+            ],
+            "settings": {
+              "python.linting.enabled": true,
+              "python.linting.lintOnSave": true,
+              "python.languageServer": "Pylance",
+              "python.analysis.completeFunctionParens": true
+            }
+        }
+    }
+  }
