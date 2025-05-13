@@ -1,0 +1,5 @@
+version: 2
+tunnels:
+  publisher:
+    addr: publisher:8080
+    proto: http
