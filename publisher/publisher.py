@@ -1,10 +1,9 @@
 import os
 import json
-import requests
+from pprint import pprint
 from google.cloud import pubsub_v1
 from flask import Flask, request
 from slack_sdk import WebClient
-from pprint import pprint
 
 app = Flask(__name__)
 
@@ -62,13 +61,7 @@ def send_message():
     except Exception as e:
         return f'Error sending message: {e}\n', 500
     
-    return 'Message has been sent.\n', 200
-
-# @app.route('/slack/actions', methods=['POST'])
-# def handle_slack_actions():
-#     payload = json.loads(request.form.get('payload', '{}'))
-#     pprint(payload)
-#     return '', 200
+    return 'Message has been sent.', 200
 
 @app.route('/publish', methods=['POST'])
 def publish_message():
@@ -79,15 +72,19 @@ def publish_message():
     topic_path = publisher.topic_path(project_id, topic_id)
 
     try:
-        payload = json.loads(request.form.get('payload', '{}'))
-        data = json.dumps(payload).encode('utf-8')
+        message = {
+            "headers": dict(request.headers),
+            "body": request.get_data(as_text=True),
+            "payload": json.loads(request.form.get('payload', '{}'))
+        }
+        data = json.dumps(message).encode('utf-8')
         future = publisher.publish(topic_path, data)
         future.result()
     except Exception as e:
         print(f'Error publishing message: {e}\n', flush=True)
-        return f'Error publishing message: {e}\n', 500
+        return f'Error publishing message: {e}', 500
     
-    return 'Message published.\n', 200
+    return 'Message was published.', 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)
