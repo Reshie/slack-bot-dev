@@ -1,14 +1,12 @@
 import os
 import json
-from pprint import pprint
+import functions_framework
 from google.cloud import pubsub_v1
 from flask import Flask, request
 from slack_sdk import WebClient
 
-app = Flask(__name__)
-
-@app.route('/message', methods=['GET'])
-def send_message():
+@functions_framework.http
+def send_message(request):
     client = WebClient(token=os.environ["SLACK_BOT_TOKEN"])
 
     blocks = [
@@ -63,8 +61,8 @@ def send_message():
     
     return 'Message has been sent.', 200
 
-@app.route('/publish', methods=['POST'])
-def publish_message():
+@functions_framework.http
+def publish_message(request):
     project_id = os.environ["PUBSUB_PROJECT_ID"]
     topic_id = os.environ["PUBSUB_TOPIC_ID"]
 
@@ -85,6 +83,17 @@ def publish_message():
         return f'Error publishing message: {e}', 500
     
     return 'Message was published.', 200
+
+##### for local testing #####
+app = Flask(__name__)
+
+@app.route('/message', methods=['GET'])
+def flask_send_message():
+    return send_message(request)
+
+@app.route('/publish', methods=['POST'])
+def flask_publish_message():
+    return publish_message(request)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)
