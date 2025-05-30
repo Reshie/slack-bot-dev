@@ -1,4 +1,5 @@
 import os
+import base64
 from google.cloud import pubsub_v1
 from subscriber.main import handle_pubsub_message
 from cloudevents.http import CloudEvent
@@ -18,7 +19,13 @@ def create_cloud_event(message):
         "type": "google.cloud.pubsub.topic.v1.messagePublished",
         "time": message.publish_time.isoformat(),
     }
-    return CloudEvent(attributes, message.data)
+    data_b64 = base64.b64encode(message.data).decode("utf-8")
+    data = {
+        "message": {
+            "data": data_b64,
+        }
+    }
+    return CloudEvent(attributes, data)
 
 def callback(message):
     cloud_event = create_cloud_event(message)

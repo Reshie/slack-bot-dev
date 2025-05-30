@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import base64
 import functions_framework
 from slack_sdk import WebClient
 from slack_sdk.signature import SignatureVerifier
@@ -42,7 +43,8 @@ def handle_pubsub_message(cloud_event: CloudEvent):
         client = WebClient(token=os.environ["SLACK_BOT_TOKEN"])
 
         # CloudEventからデータを抽出
-        data = json.loads(cloud_event.data.decode("utf-8"))
+        data_b64 = cloud_event.data["message"]["data"]
+        data = json.loads(base64.b64decode(data_b64).decode("utf-8"))
         headers = data["headers"]
         body = data["body"]
         message_data = data["payload"]
