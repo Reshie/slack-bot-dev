@@ -43,7 +43,7 @@ jobs:
             --gen2 \
             --runtime=python312 \
             --region=${REGION} \
-            --source=./publisher \
+            --source=./publisher/sender \
             --entry-point=send_message \
             --trigger-http \
             --allow-unauthenticated \
@@ -55,7 +55,7 @@ jobs:
             --gen2 \
             --runtime=python312 \
             --region=${REGION} \
-            --source=./publisher \
+            --source=./publisher/publisher \
             --entry-point=publish_message \
             --trigger-http \
             --allow-unauthenticated \
@@ -68,7 +68,7 @@ jobs:
             --gen2 \
             --runtime=python312 \
             --region=${REGION} \
-            --source=./subscriber \
+            --source=./subscriber/subscriber \
             --entry-point=handle_pubsub_message \
             --max-instances=3 \
             --service-account=slackbot-functions@${{ secrets.GCLOUD_PROJECT_ID }}.iam.gserviceaccount.com \
