@@ -1,6 +1,6 @@
 import os
 from google.cloud import pubsub_v1
-from subscriber.subscriber import handle_pubsub_message
+from subscriber.main import handle_pubsub_message
 from cloudevents.http import CloudEvent
 
 project_id = os.environ["GCLOUD_PROJECT_ID"] 

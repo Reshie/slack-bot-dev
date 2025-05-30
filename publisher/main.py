@@ -1,6 +1,6 @@
 from flask import Flask, request
-from publisher.sender.sender import send_message
-from publisher.publisher import publish_message
+from sender.main import send_message
+from publisher.main import publish_message
 
 ##### for local testing #####
 
