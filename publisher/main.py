@@ -1,7 +1,6 @@
 from flask import Flask, request
-from slack_sdk import WebClient
-from sender import send_message
-from publisher import publish_message
+from publisher.sender.sender import send_message
+from publisher.publisher import publish_message
 
 ##### for local testing #####
 
