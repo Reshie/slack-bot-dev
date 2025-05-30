@@ -64,7 +64,7 @@ jobs:
             --set-env-vars=GCLOUD_PROJECT_ID=${{ secrets.GCLOUD_PROJECT_ID }} \
             --set-env-vars=PUBSUB_TOPIC_ID=${PUBSUB_TOPIC_ID}
 
-          gcloud pubsub topics create ${PUBSUB_TOPIC_ID}
+          gcloud pubsub topics create ${PUBSUB_TOPIC_ID} || true
 
           # gcloud eventarc triggers create ${FUNCTION_PREFIX}trigger-pubsub \
           #   --location=${REGION} \
