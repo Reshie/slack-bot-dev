@@ -6,7 +6,7 @@ from publisher.main import publish_message
 
 app = Flask(__name__)
 
-@app.route('/message', methods=['GET'])
+@app.route('/message', methods=['POST'])
 def flask_send_message():
     return send_message(request)
 
