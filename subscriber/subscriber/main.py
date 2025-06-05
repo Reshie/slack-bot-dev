@@ -2,6 +2,7 @@ import os
 import json
 import time
 import base64
+import requests
 import functions_framework
 from slack_sdk import WebClient
 from slack_sdk.signature import SignatureVerifier
@@ -55,10 +56,14 @@ def handle_pubsub_message(cloud_event: CloudEvent):
         # メッセージの更新に必要な情報を取得
         channel_id = message_data["container"]["channel_id"]
         ts = message_data["container"]["message_ts"]
-        selected_option = message_data["actions"][0]["value"]
+        action_data = json.loads(message_data["actions"][0]["value"])
+        text = action_data["text"]
+        url = action_data["url"]
+
+        # 外部URLにリクエストを送信
+        response = requests.get(url)
 
         # 更新するメッセージの内容を構築
-        text = f"Button {selected_option} was pressed!"
         blocks = [
             {
                 "type": "section",
@@ -74,7 +79,7 @@ def handle_pubsub_message(cloud_event: CloudEvent):
             channel=channel_id,
             ts=ts,
             blocks=blocks,
-            text=f"Button {selected_option} was pressed!"
+            text=text
         )
 
         print("Message was updated.")
