@@ -14,7 +14,7 @@ services:
     extra_hosts:
       - host.docker.internal:host-gateway
     volumes:
-      - ./pubsub:/code
+      - .:/code
     command: 
       ./pubsub/entrypoint.sh
     ports:
@@ -24,23 +24,40 @@ services:
     build:
       context: ./publisher
       dockerfile: Dockerfile
-    environment:
-      - PUBSUB_EMULATOR_HOST=pubsub-emulator:8085
-      - PUBSUB_PROJECT_ID=my-project
-      - PUBSUB_TOPIC_ID=my-topic
-      - FLASK_APP=publisher.py
-      - FLASK_ENV=development
+    env_file:
+      - ./publisher/.env.dev
     command: sleep infinity
     ports:
       - 8080:8080
+    volumes:
+      - ./publisher:/app
   subscriber:
     container_name: subscriber
     build:
       context: ./subscriber
       dockerfile: Dockerfile
-    environment:
-      - PUBSUB_EMULATOR_HOST=pubsub-emulator:8085
-      - PUBSUB_PROJECT_ID=my-project
-      - PUBSUB_SUBSCRIPTION_ID=my-subscription
+    env_file:
+      - ./subscriber/.env.dev
     working_dir: /app
     command: sleep infinity
+    volumes:
+      - ./subscriber:/app
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    depends_on:
+      - publisher
+    restart: unless-stopped
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+    env_file:
+      - ./ngrok/.env
+    volumes:
+      - ./ngrok/ngrok.yml:/etc/ngrok.yml
+    ports:
+      - 4040:4040
+
+

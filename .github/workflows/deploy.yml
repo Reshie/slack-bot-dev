@@ -1,0 +1,80 @@
+name: Deploy to Cloud Run Functions
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/${{ secrets.GCLOUD_PROJECT_NUM }}/locations/global/workloadIdentityPools/slackbot-build/providers/github
+          service_account: slackbot-build@${{ secrets.GCLOUD_PROJECT_ID }}.iam.gserviceaccount.com
+
+      - name: Set up the Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy Cloud Run Functions
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            FUNCTION_PREFIX="stg-"
+            REGION=asia-northeast1
+            PUBSUB_TOPIC_ID=${{ secrets.STG_PUBSUB_TOPIC_ID }}
+          else
+            FUNCTION_PREFIX=""
+            REGION=asia-northeast1
+            PUBSUB_TOPIC_ID=${{ secrets.PUBSUB_TOPIC_ID }}
+          fi
+
+          gcloud functions deploy ${FUNCTION_PREFIX}slack-send-message \
+            --gen2 \
+            --runtime=python312 \
+            --region=${REGION} \
+            --source=./publisher/sender \
+            --entry-point=send_message \
+            --trigger-http \
+            --allow-unauthenticated \
+            --max-instances=3 \
+            --service-account=slackbot-functions@${{ secrets.GCLOUD_PROJECT_ID }}.iam.gserviceaccount.com \
+            --set-env-vars=SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }}
+
+          gcloud functions deploy ${FUNCTION_PREFIX}slack-publish-message \
+            --gen2 \
+            --runtime=python312 \
+            --region=${REGION} \
+            --source=./publisher/publisher \
+            --entry-point=publish_message \
+            --trigger-http \
+            --allow-unauthenticated \
+            --max-instances=3 \
+            --service-account=slackbot-functions@${{ secrets.GCLOUD_PROJECT_ID }}.iam.gserviceaccount.com \
+            --set-env-vars=GCLOUD_PROJECT_ID=${{ secrets.GCLOUD_PROJECT_ID }} \
+            --set-env-vars=PUBSUB_TOPIC_ID=${PUBSUB_TOPIC_ID}
+
+          gcloud functions deploy ${FUNCTION_PREFIX}slack-handle-message \
+            --gen2 \
+            --runtime=python312 \
+            --region=${REGION} \
+            --source=./subscriber/subscriber \
+            --entry-point=handle_pubsub_message \
+            --max-instances=3 \
+            --service-account=slackbot-functions@${{ secrets.GCLOUD_PROJECT_ID }}.iam.gserviceaccount.com \
+            --trigger-topic=${PUBSUB_TOPIC_ID} \
+            --trigger-service-account=slackbot-trigger@${{ secrets.GCLOUD_PROJECT_ID }}.iam.gserviceaccount.com \
+            --set-env-vars=GCLOUD_PROJECT_ID=${{ secrets.GCLOUD_PROJECT_ID }} \
+            --set-env-vars=PUBSUB_TOPIC_ID=${PUBSUB_TOPIC_ID} \
+            --set-env-vars=SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }} \
+            --set-env-vars=SLACK_SIGNING_SECRET=${{ secrets.SLACK_SIGNING_SECRET }}
